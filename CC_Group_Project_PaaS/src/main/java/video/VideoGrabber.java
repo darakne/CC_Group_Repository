@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Map;
 
@@ -34,48 +33,47 @@ import org.bytedeco.javacv.Java2DFrameConverter;
 
 public class VideoGrabber {
 	final static int BUFFERED_IMAGE_TYPE = BufferedImage.TYPE_INT_ARGB;
+	
+	private int numberOfColorsProcessedInOneGo;
+	private String imageFolder;
 
-
-	/**
-	 * if img is read by ImageIO
-	 * sets type of BufferedImage or else we have problems later
-	 * from: https://stackoverflow.com/questions/22391353/get-color-of-each-pixel-of-an-image-using-bufferedimages
-	 * @param image
-	 * @return
-	 */
-	public BufferedImage convertToARGB(BufferedImage image){
-	    BufferedImage newImage = new BufferedImage(
-	    image.getWidth(), image.getHeight(),
-	    BUFFERED_IMAGE_TYPE);
-	    Graphics2D g = newImage.createGraphics();
-	    g.drawImage(image, 0, 0, null);
-	    g.dispose();
-	    return newImage;
+	public int getNumberOfColorsProcessedInOneGo() {
+		return numberOfColorsProcessedInOneGo;
 	}
+
+	public void setNumberOfColorsProcessedInOneGo(int numberOfColorsProcessedInOneGo) {
+		this.numberOfColorsProcessedInOneGo = numberOfColorsProcessedInOneGo;
+	}
+
+	public String getImageFolder() {
+		return imageFolder;
+	}
+
+	public void setImageFolder(String imageFolder) {
+		if(null != imageFolder) {
+			if(new File(imageFolder).exists()) {
+				
+				if(imageFolder.endsWith(File.separator))
+					this.imageFolder = imageFolder;
+				else
+					this.imageFolder = imageFolder+File.separator;
+			}
+		}
+		
+	}
+
 	
 	/**
-	 * 
-	 * @param image BufferedImage after it was converted by method "convertToARGB(img)"
-	 * @return Color[][]
+	 * Gets the Colors of the whole video.
+	 * @param videopath
+	 * @return
 	 */
-	public HashSet<Color> getColorFromBufferedImage(BufferedImage image) {
-		HashSet<Color> list = new HashSet<>();
-		// Color[][] colors = new Color[image.getWidth()][image.getHeight()];
-	        for (int x = 0; x < image.getWidth(); x++) {
-	            for (int y = 0; y < image.getHeight(); y++) {
-	            	list.add(new Color(image.getRGB(x, y)));
-	            }
-	        }
-	      //  System.out.println("getColorFromBufferedImage(): " + new ArrayList<Color>(list));
-		  //now we have colors!
-	        return list;
-	}
-	//to be thread-ed
-	//no error handling with path yet
-	public Color[] getSortedColors(String filepath) {
-		HashSet<Color> list = new HashSet<>();
-		
-    	FFmpegFrameGrabber g = new FFmpegFrameGrabber(filepath);
+	public ArrayList<Color> getColorsFromVideo(String videopath) {
+	//	BufferedImage image = ImageIO.read(new File("D:\\temp\\randomvideo.mp4"));
+		System.out.println("---------------");
+
+		ArrayList<Color> list = null;
+		FFmpegFrameGrabber g = new FFmpegFrameGrabber(videopath);
 		try {
 			g.start();
 		} catch (Exception e) {
@@ -86,10 +84,13 @@ public class VideoGrabber {
 
 		int nullCounter = 0;
     	int len = g.getLengthInFrames();
-    	list = new HashSet<>(len);
+    	
+    	list = new ArrayList<>(len * g.getImageHeight() * g.getImageWidth());
     	System.out.println("Frames to do: " + len);
 
-        Java2DFrameConverter converter = new Java2DFrameConverter();        
+        Java2DFrameConverter converter = new Java2DFrameConverter(); 
+        
+        
         for(int i=1; i<len; ++i) {
         	try {
 				g.setFrameNumber(i);
@@ -106,10 +107,10 @@ public class VideoGrabber {
 			}  
             BufferedImage image = converter.convert(frame);           
             if(null != image) {
-            	image  = convertToARGB(image);
-            	list.addAll(getColorFromBufferedImage(image));
+            	
+            	list.addAll(getColorsFromBufferedImage(image));
             	/*try {
-            	ImageIO.write(image,"png", new File("D:\temp2\Img" + i + ".png"));
+            	ImageIO.write(image,"png", new File("D:/temp2/Img" + i + ".png"));
             	 } catch (Exception e) {
      	            // TODO Auto-generated catch block
      	            e.printStackTrace();
@@ -127,9 +128,64 @@ public class VideoGrabber {
         System.out.println("Null-Frames: " + nullCounter + "//" + len);
 		System.out.println("Colors collected: " + list.size());
 		
+		return list;
+	}
+	/**
+	 * if img is read by ImageIO
+	 * sets type of BufferedImage or else we have problems later
+	 * from: https://stackoverflow.com/questions/22391353/get-color-of-each-pixel-of-an-image-using-bufferedimages
+	 * @param image
+	 * @return
+	 */
+	private BufferedImage convertToARGB(BufferedImage image){
+	    BufferedImage newImage = new BufferedImage(
+	    image.getWidth(), image.getHeight(),
+	    BUFFERED_IMAGE_TYPE);
+	    Graphics2D g = newImage.createGraphics();
+	    g.drawImage(image, 0, 0, null);
+	    g.dispose();
+	    return newImage;
+	}
+	
+	/**
+	 * 
+	 * @param image A BufferedImage
+	 * @return ArrayList<Color> is empty if BufferedImage was null
+	 */
+	public ArrayList<Color> getColorsFromBufferedImage(BufferedImage image) {
+		if(null == image) {
+			System.out.println("BufferedImage was null.");
+			return new ArrayList<Color>();
+		}
+		image  = convertToARGB(image);
+		
+		int width=image.getWidth();
+		int height = image.getHeight();
+		ArrayList<Color> list = new ArrayList<>(width * height);
+		// Color[][] colors = new Color[image.getWidth()][image.getHeight()];
+	        for (int x = 0; x < width; x++) {
+	            for (int y = 0; y < height ; y++) {
+	            	list.add(new Color(image.getRGB(x, y)));
+	            }
+	        }
+
+		  //now we have colors!
+	        return list;
+	}
+	
+	/**
+	 * Sorts the input list by liminescence.
+	 * @param list
+	 * @return
+	 */
+	public ArrayList<Color> sortColorListByLuminescence(ArrayList<Color> list) {
+		if(null == list) {
+			System.out.println("Arraylist was null.");
+			return new ArrayList<Color>();
+		}
+
 		//from here: https://stackoverflow.com/questions/25680108/how-to-sort-color-codes-from-light-to-dark-in-java
-        ArrayList<Color> list1 = new ArrayList<Color>(list);
-		list1.sort(new Comparator<Color>() {
+        list.sort(new Comparator<Color>() {
             @Override
             public int compare(Color c1, Color c2) {
             	 return Float.compare(((float) c1.getRed() * 0.299f + (float) c1.getGreen() * 0.587f
@@ -138,10 +194,55 @@ public class VideoGrabber {
              }
         });
         
-        return list.toArray(new Color[0]);
+        return list;
+	}
+	/**
+	 * Uses the input to draw small pieces of the gradient. Uses createGradientImage() for that
+	 * @param colors
+	 * @return number of images created.
+	 */
+	public int drawGradientImageParts(Color[] colors) {
+		boolean continueIt = true;
+		int imgNr=0;
+		for(int i=0-numberOfColorsProcessedInOneGo+1, j=0, colorLen=colors.length, testJ=0;continueIt;) {			
+			if(testJ < colorLen) {
+				i = i+numberOfColorsProcessedInOneGo-1;
+				j = j+numberOfColorsProcessedInOneGo;
+			}
+			else {
+				j = colorLen;
+				i = colorLen-i;
+				continueIt=false;
+			}
+			//System.out.println("copy arr: " + i + " " + (i+colorPart) + " / " + colorLen );
+			Color[] colorsPartArr = Arrays.copyOfRange(colors, i, i +numberOfColorsProcessedInOneGo);
+			BufferedImage image1 = createGradientImage(colorsPartArr);
+			
+			try {
+				ImageIO.write(image1,"png", new File(imageFolder +"Img" + imgNr + ".png"));
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+
+			System.out.println(imgNr + ".part (" + i + "/" + colorLen + ")");
+			
+					
+			testJ = j+numberOfColorsProcessedInOneGo;
+			++imgNr;
+		}
+		--imgNr;
+		
+		return imgNr;
 	}
 	
-	public BufferedImage createGradientImage(Color[] colors) {
+	/**
+	 * Creates the gradient by LinearGradientPaint.
+	 * @param colors colors to be drawn into the gradient.
+	 * @return
+	 */
+	private BufferedImage createGradientImage(Color[] colors) {
 		final BufferedImage resultImg = new BufferedImage(
                 10, 100, BUFFERED_IMAGE_TYPE);
 				
@@ -156,32 +257,35 @@ public class VideoGrabber {
          Point2D start = new Point2D.Float(0, 100);
          Point2D end = new Point2D.Float(200,100);
          //not enough heap space for this
-         
-         //https://stackoverflow.com/questions/27532/generating-gradients-programmatically
-        for(int i=0, j=colors.length-1;i<j;++i) {
-        	Color color1 = colors[i];
-        	Color color2 = colors[i+1];
-        	float ratio = dist[i];
- 
-        	if(null!=color1 && null!= color2) {
-        		
-        	
-            int red = (int) (color2.getRed() * ratio + color1.getRed() * (1 - ratio));
-            int green = (int) (color2.getGreen() * ratio + color1.getGreen() * (1 - ratio));
-            int blue = (int) (color2.getBlue() * ratio + color1.getBlue() * (1 - ratio));
-            Color stepColor = new Color(red, green, blue);
-            
-            g1.setPaint(stepColor);
-            g1.fillRect(0, 0, 200, 200);
-        	}
-        }
-     
-         
-        // LinearGradientPaint p = new LinearGradientPaint(start, end, dist, colors); 
-     
-         //g1.fillRect(0, 0, 200, 200);
+         LinearGradientPaint p = new LinearGradientPaint(start, end, dist, colors); 
+         g1.setPaint(p);
+         g1.fillRect(0, 0, 200, 200);
          g1.dispose();
          return resultImg;
+	}
+	
+	/**
+	 * 
+	 * @param numberOfImages Number of images to be added together (Images are named with like Img0.png)
+	 * @return
+	 */
+	public BufferedImage addAllImagePartsTogether(int numberOfImages) {
+		//now get images and add them together
+		BufferedImage resultImg = null;
+		try {
+			resultImg = ImageIO.read(new File(imageFolder + "Img" +0 + ".png"));
+		
+			joiningfor:for(int i=1; i<numberOfImages;++i) {
+				BufferedImage image1 = ImageIO.read(new File(imageFolder+ "Img" +i + ".png"));
+				resultImg = joinBufferedImage(resultImg, image1);
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.out.println("---------------");
+		
+		return resultImg;
 	}
 	
 	/**
@@ -191,7 +295,7 @@ public class VideoGrabber {
 	 * @return
 	 */
 	//copied from https://stackoverflow.com/questions/20826216/copy-two-bufferedimages-into-one-image-side-by-side
-	public BufferedImage joinBufferedImage(BufferedImage img1,BufferedImage img2) {
+	private BufferedImage joinBufferedImage(BufferedImage img1,BufferedImage img2) {
 
         int newWidth = img1.getWidth()+img2.getWidth();
         int newHeight = Math.max(img1.getHeight(),img2.getHeight());
@@ -205,55 +309,20 @@ public class VideoGrabber {
         return newImage;
     }
 	
-	public static void main(String[] args) throws IOException {
-		// TODO Auto-generated method stub
-		VideoGrabber vg = new VideoGrabber();
-		
-
-	//	BufferedImage image = ImageIO.read(new File("D:\\temp\\randomvideo.mp4"));
-		
-		Color[] colors = vg.getSortedColors("D:\\temp\\randomvideo.mp4");
-		int colorPart = 100000; //(int) ((float)colors.length*0.1);
-		boolean continueIt = true;
-		int imgNr=0;
-		for(int i=0-colorPart+1, j=0, colorLen=colors.length, testJ=0;continueIt;) {			
-			if(testJ < colorLen) {
-				i = i+colorPart-1;
-				j = j+colorPart;
-			}
-			else {
-				j = colorLen;
-				i = colorLen-i;
-				continueIt=false;
-			}
-			//System.out.println("copy arr: " + i + " " + (i+colorPart) + " / " + colorLen );
-			Color[] colorsPartArr = Arrays.copyOfRange(colors, i, i +colorPart);
-			BufferedImage image1 = vg.createGradientImage(colorsPartArr);
-			
-			ImageIO.write(image1,"png", new File("D:\\temp2\\Img" +imgNr + ".png"));
-			
-			System.out.println("\n---------------");
-			System.out.println(imgNr + ".part (" + i + "/" + colorLen + ")");
-			System.out.println("\n---------------");
-					
-			testJ = j+colorPart;
-			++imgNr;
-		}
-		--imgNr;
-		//now get images and add them together
-		BufferedImage resultImg = ImageIO.read(new File("D:\\temp2\\Img" +0 + ".png"));
-		joiningfor:for(int i=1; i<imgNr;++i) {
-			BufferedImage image1 = ImageIO.read(new File("D:\\temp2\\Img" +i + ".png"));
-			resultImg = vg.joinBufferedImage(resultImg, image1);
-		}
-		
+	/**
+	 * Blurs the input image
+	 * @param image
+	 */
+	public BufferedImage blurImage(BufferedImage image) {
+		if(null == image) return null;
 		//now blur it
-		///source: https://stackoverflow.com/questions/29295929/java-blur-image
-		
+				///source: https://stackoverflow.com/questions/29295929/java-blur-image
+				
 		 	int radius = 30;
 		    int size = radius * 2 + 1;
-		    float weight = 1.0f / (size * size);
-		    float[] data = new float[size * size];
+		    int sizeXsize = size * size;
+		    float weight = 1.0f / (sizeXsize);
+		    float[] data = new float[sizeXsize];
 
 		    for (int i = 0, datalength=data.length; i < datalength; ++i) {
 		        data[i] = weight;
@@ -262,19 +331,45 @@ public class VideoGrabber {
 
 		    BufferedImageOp op = new ConvolveOp( kernel );
 		    //clone resultImg
-		    ColorModel cm = resultImg.getColorModel();
+		    ColorModel cm = image.getColorModel();
 		    boolean isAlphaPremultiplied = cm.isAlphaPremultiplied();
-		    WritableRaster raster = resultImg.copyData(null);
+		    WritableRaster raster = image.copyData(null);
 		    BufferedImage otherImg = new BufferedImage(cm, raster, isAlphaPremultiplied, null);
-		    resultImg = op.filter(otherImg, resultImg);
+		    image = op.filter(otherImg, image);
+			
+		    return image;
+	}
 	
-         try {
-        	 System.out.println("Writing end image.");
-         	ImageIO.write(resultImg,"png", new File("D:\\temp2\\Img.png"));
-         	 } catch (Exception e) {
-  	            // TODO Auto-generated catch block
-  	            e.printStackTrace();
-  	        }
+	public static void main(String[] args) throws IOException {
+		// TODO Auto-generated method stub
+		VideoGrabber vg = new VideoGrabber();
+		
+		String videopath = "D:/temp/randomvideo.mp4";
+		vg.setNumberOfColorsProcessedInOneGo(10000);
+		
+		String imgfolder = "D:/temp3/";
+		vg.setImageFolder(imgfolder);
+
+		//process the video
+		ArrayList<Color> list= vg.getColorsFromVideo(videopath);
+		list = vg.sortColorListByLuminescence(list);
+		Color[] colors = list.toArray(new Color[0]);
+		
+		//create the gradient
+		 int imgNr = vg.drawGradientImageParts(colors);
+		 BufferedImage image = vg.addAllImagePartsTogether(imgNr);
+		 BufferedImage result = vg.blurImage( image);
+		 
+		   try {
+	        	 System.out.println("Writing end image.");
+	         	ImageIO.write(result,"png", new File(imgfolder+ "Img.png"));
+	         	 } catch (IOException e) {
+	  	            // TODO Auto-generated catch block
+	  	            e.printStackTrace();
+	  	        }
+		
+		
+		
 	     
 	}
 
