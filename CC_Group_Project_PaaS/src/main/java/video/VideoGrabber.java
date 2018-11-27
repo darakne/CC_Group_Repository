@@ -344,10 +344,10 @@ public class VideoGrabber {
 		// TODO Auto-generated method stub
 		VideoGrabber vg = new VideoGrabber();
 		
-		String videopath = "D:/temp/randomvideo.mp4";
+		String videopath = "C:/temp/randomvideo.mp4";
 		vg.setNumberOfColorsProcessedInOneGo(10000);
 		
-		String imgfolder = "D:/temp3/";
+		String imgfolder = "C:/temp3/";
 		vg.setImageFolder(imgfolder);
 
 		//process the video
