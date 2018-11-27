@@ -30,6 +30,6 @@
   </servlet>
   <servlet-mapping>
     <servlet-name>index</servlet-name>
-    <url-pattern>/restapi/index</url-pattern>
+    <url-pattern>/restapi/*</url-pattern>
   </servlet-mapping>
 </web-app>
