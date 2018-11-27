@@ -35,6 +35,19 @@ public class RestServlet {
 	@Context
 	private UriInfo context;
 	
+	
+	/**
+	 * Is for testing if the servlet is online.
+	 * @return "hello"
+	 */
+	@Path("/hello")
+	@GET // http://localhost:8080/CC_Group_Project_PaaS/restapi
+	@Produces(MediaType.TEXT_PLAIN)
+	public String sayHello() {	
+		logger.trace("Saying hello.");
+		return "Hello!";			
+	}
+	
 	@POST 
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	public Response upload(@FormParam("file") InputStream uploadedInputStream,
