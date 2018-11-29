@@ -12,6 +12,11 @@
 			<param-name>jersey.config.server.provider.packages</param-name>
 			<param-value>servlet</param-value>
 		</init-param>
+		 <init-param>
+            <param-name>jersey.config.server.provider.classnames</param-name>
+            <param-value>org.glassfish.jersey.media.multipart.MultiPartFeature</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>CC_Group_Project_PaaS</servlet-name>
@@ -30,6 +35,6 @@
   </servlet>
   <servlet-mapping>
     <servlet-name>index</servlet-name>
-    <url-pattern>/restapi/*</url-pattern>
+    <url-pattern>/home</url-pattern>
   </servlet-mapping>
 </web-app>

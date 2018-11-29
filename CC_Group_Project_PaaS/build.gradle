@@ -93,8 +93,10 @@ dependencies {
 	//go and drink some coffee if you load this - it takes a long time
 	implementation 'org.bytedeco:javacv-platform:1.4.3'
 	
-
 	
+	//multipart form stuff
+	implementation 'org.glassfish.jersey.media:jersey-media-multipart:2.27'
+	implementation 'org.jvnet.mimepull:mimepull:1.9.10'
 
 	
 	//video libraries

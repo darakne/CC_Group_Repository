@@ -5,8 +5,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
 import javax.ws.rs.*;
+import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -15,7 +15,7 @@ import javax.ws.rs.core.UriInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-
+import org.glassfish.jersey.media.multipart.FormDataParam;
 
 
 /**
@@ -24,33 +24,34 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
  * The REST-servlet. ...
  */
 
+//only http://localhost:8080/CC_Group_Project_PaaS/home is index.jsp
 @Path("/home")
-public class RestServlet { 
+public class RestServlet extends Application{ 
 	private static final String UPLOAD_FOLDER ="C:/temp/";
 	private static final Logger logger = LogManager.getLogger(RestServlet.class.getName());
 	
-	public RestServlet() {
-		
-	}
+
 	@Context
 	private UriInfo context;
 	
 	
+
 	/**
 	 * Is for testing if the servlet is online.
 	 * @return "hello"
 	 */
 	@Path("/hello")
-	@GET // http://localhost:8080/CC_Group_Project_PaaS/restapi
+	@GET // http://localhost:8080/CC_Group_Project_PaaS/home/hello
 	@Produces(MediaType.TEXT_PLAIN)
 	public String sayHello() {	
 		logger.trace("Saying hello.");
 		return "Hello!";			
 	}
-	
+
+	@Path("/upload")
 	@POST 
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	public Response upload(@FormParam("file") InputStream uploadedInputStream,
+	public Response uploadFile(@FormParam("file") InputStream uploadedInputStream,
 			@FormParam("file") FormDataContentDisposition fileDetail) {	
 			logger.debug("Im in the upload");
 			if (uploadedInputStream == null || fileDetail == null) {
@@ -83,4 +84,6 @@ public class RestServlet {
 			out.flush();
 			out.close();
 	}
+	
+	
 }
