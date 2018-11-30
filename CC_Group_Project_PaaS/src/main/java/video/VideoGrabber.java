@@ -344,10 +344,10 @@ public class VideoGrabber {
 		// TODO Auto-generated method stub
 		VideoGrabber vg = new VideoGrabber();
 		
-		String videopath = "C:/temp/randomvideo.mp4";
-		vg.setNumberOfColorsProcessedInOneGo(10000);
+		String videopath = "C:/temp/randomvideo2.mp4";
+		vg.setNumberOfColorsProcessedInOneGo(100000);
 		
-		String imgfolder = "C:/temp3/";
+		String imgfolder = "C:/temp2/";
 		vg.setImageFolder(imgfolder);
 
 		//process the video
@@ -355,7 +355,7 @@ public class VideoGrabber {
 		list = vg.sortColorListByLuminescence(list);
 		Color[] colors = list.toArray(new Color[0]);
 		
-		//create the gradient
+		//create the gradient image
 		 int imgNr = vg.drawGradientImageParts(colors);
 		 BufferedImage image = vg.addAllImagePartsTogether(imgNr);
 		 BufferedImage result = vg.blurImage( image);
