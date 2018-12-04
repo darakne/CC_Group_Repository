@@ -11,9 +11,8 @@
 <body>
 <h1>Upload a file</h1>
 <form id="sendFileForm" action="http://localhost:8080/CC_Group_Project_PaaS/home/upload" method="post" enctype="multipart/form-data">
-<label for="file"> Select a file to be uploaded:</label>
-<input type="file" name="file"> <br>  <br>
-<button type="submit" value="submit"> Upload</button>
+	<label>Select File</label><input type= "file" name="file" /> <br/><br/>
+	<input type="submit" title="Save"/>
 </form>
 hello jsp. I am at: http://localhost:8080/CC_Group_Project_PaaS/home/index (see web.xml)
 

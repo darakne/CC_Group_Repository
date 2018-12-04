@@ -47,12 +47,12 @@ public class RestServlet extends Application{
 		logger.trace("Saying hello.");
 		return "Hello!";			
 	}
-
+	//https://www.geekmj.org/jersey/jax-rs-single-file-upload-example-406/
 	@Path("/upload")
 	@POST 
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	public Response uploadFile(@FormParam("file") InputStream uploadedInputStream,
-			@FormParam("file") FormDataContentDisposition fileDetail) {	
+	public Response uploadFile(@FormDataParam("file") InputStream uploadedInputStream,
+			@FormDataParam("file") FormDataContentDisposition fileDetail) {	
 			logger.debug("Im in the upload");
 			if (uploadedInputStream == null || fileDetail == null) {
 				logger.error("Invalid form data - status 400.");

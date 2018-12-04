@@ -29,12 +29,12 @@
 	</welcome-file-list>
 	
 	
-	  <servlet>
+  <servlet>
     <servlet-name>index</servlet-name>
     <jsp-file>/WEB-INF/index.jsp</jsp-file>
   </servlet>
   <servlet-mapping>
     <servlet-name>index</servlet-name>
-    <url-pattern>/home</url-pattern>
+    <url-pattern>/home/*</url-pattern>
   </servlet-mapping>
 </web-app>
