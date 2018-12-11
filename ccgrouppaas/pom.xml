@@ -103,6 +103,14 @@
     <artifactId>javacv-platform</artifactId>
     <version>1.4.3</version>
 </dependency>
+
+<!--  Amazon Database stuff -->
+<!-- https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk-rds -->
+<dependency>
+    <groupId>com.amazonaws</groupId>
+    <artifactId>aws-java-sdk-rds</artifactId><!--$NO-MVN-MAN-VER$-->
+    <version>1.11.466</version>
+</dependency>
     
   </dependencies>
   <build>

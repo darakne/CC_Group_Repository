@@ -114,6 +114,123 @@ public class VideoGrabber {
 	}
 	*/
 	
+	public  ArrayList<Integer> extractFramesAndColorsFromVideo(String videopath, int forkpool)  {
+
+		FFmpegFrameGrabber g = new FFmpegFrameGrabber(videopath);
+		try {
+			g.start();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	//from here: https://github.com/bytedeco/javacv/blob/master/platform/src/test/java/org/bytedeco/javacv/FrameConverterTest.java
+
+		int nullCounter = 0;
+    	int len = g.getLengthInFrames();
+
+    	System.out.println("Frames to do: " + len);  
+        
+        //lets work with a threadpool with threads for color extracting
+       // ExecutorService executorService = Executors.newFixedThreadPool(50);
+         ArrayList<Integer> resultColors = new ArrayList<>();
+         ForkJoinPool forkJoinPool = new ForkJoinPool(forkpool);
+    	try {
+    	
+        
+        int listLength = 1; //frames per thread
+        ArrayList<Frame> imglist = new ArrayList<>(listLength);
+        int imgCounter=0;
+        int threadId=0;
+        for(int i=1; i<len; ++i) {
+        	try {
+				g.setFrameNumber(i);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}  
+        	Frame frame = null;
+			try {
+				frame = g.grab();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}  
+             
+            //collect 5 frames
+            if(null != frame) {
+            //	System.out.println("frame");
+            	imglist.add(frame);
+            	++imgCounter;
+            	//list.addAll(getColorsFromBufferedImage(image));
+            	
+            	
+             /*	try {
+            	ImageIO.write(image,"png", new File(testImgfolder + i + ".png"));
+            	 } catch (Exception e) {
+     	            // TODO Auto-generated catch block
+     	            e.printStackTrace();
+     	        } */
+            }else {
+            	++nullCounter;
+            //	System.out.println("null frame");
+            }
+            	
+            
+            if(imgCounter % listLength == 0) {
+            	//create a thread to extract the 5 frames
+            	ArrayList<Integer> result = forkJoinPool.invoke(new ColorFromFrameExtractor(threadId, imglist));
+            	resultColors.addAll(result);
+            	System.out.println("colors collected so far: " + resultColors.size());
+            	
+            	//executorService.execute(new ColorFromFrameExtractor(threadId, imglist));
+            	
+            	imglist = new ArrayList<>(); //empty list
+            	imgCounter = 0;
+            	++threadId;
+            }
+	      
+       //   System.out.println("working on frame: " +i + "/" + len);
+        }
+        
+        if(imgCounter != 0) {
+        	//create a thread to extract the 5 frames
+        	ArrayList<Integer> result = forkJoinPool.invoke(new ColorFromFrameExtractor(threadId, imglist));
+        	resultColors.addAll(result);
+        	imglist = new ArrayList<>(); //empty list
+        	imgCounter = 0;
+        	++threadId;
+        }
+        
+        try {
+			g.stop();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+       
+  
+        System.out.println("Waiting to terminate threads: " + (threadId-1));
+        
+    	}catch(OutOfMemoryError e) {
+    		e.printStackTrace();
+    		//System.gc ();
+    		return resultColors;
+    	}
+		//wait unitl one minute goes away
+		try {
+			forkJoinPool.awaitTermination(10,  TimeUnit.SECONDS);
+		} catch (InterruptedException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		
+		System.out.println("Null-Frames: " + nullCounter + "//" + len);
+		System.out.println("Colors collected: " + resultColors.size());
+		
+		return resultColors;
+	}
+	
 	/**
 	 * Sorts the input list by liminescence.
 	 * @param list
@@ -225,6 +342,7 @@ public class VideoGrabber {
 	 * @return
 	 */
 	public BufferedImage addAllImagePartsTogether(int numberOfImages) {
+		if(numberOfImages<=0) return null;
 		//now get images and add them together
 		BufferedImage resultImg = null;
 		try {
@@ -299,143 +417,37 @@ public class VideoGrabber {
 		// TODO Auto-generated method stub
 		VideoGrabber vg = new VideoGrabber();
 		
-		String videopath = "C:/temp/randomvideo.mp4";
-		int numberOfColorsProcessedInOneGo = 100000;
+		String videopath = "C:/temp/randomvideo2.mp4";
+		
+		int partsToSplitColors = 10;
+		
 		
 		String imgfolder = "C:/temp2/";
 		vg.setImageFolder(imgfolder);
 		
 		String testImgfolder = "C:/temp3/";
 		
-		int forkpool = 5;
+		int forkpool = 20;
 
 		//process the video
 //		BufferedImage image = ImageIO.read(new File("D:\\temp\\randomvideo.mp4"));
 		System.out.println("---------------");
 
-		
-			FFmpegFrameGrabber g = new FFmpegFrameGrabber(videopath);
-			try {
-				g.start();
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-	    	//from here: https://github.com/bytedeco/javacv/blob/master/platform/src/test/java/org/bytedeco/javacv/FrameConverterTest.java
+		System.out.println("Collecting result colors.");
+		//now collect the results
+	    ArrayList<Integer> list = vg.extractFramesAndColorsFromVideo(videopath, forkpool);
 
-			int nullCounter = 0;
-	    	int len = g.getLengthInFrames();
-
-	    	System.out.println("Frames to do: " + len);
-
-	        Java2DFrameConverter converter = new Java2DFrameConverter(); 
-	        
-	        //lets work with a threadpool with threads for color extracting
-	       // ExecutorService executorService = Executors.newFixedThreadPool(50);
-	        ForkJoinPool forkJoinPool = new ForkJoinPool(forkpool);
-	        
-	       ArrayList<Integer> resultColors = new ArrayList<>();
-	        
-	        int listLength = 1; //frames per thread
-	        ArrayList<BufferedImage> imglist = new ArrayList<>(listLength);
-	        int imgCounter=0;
-	        int threadId=0;
-	        for(int i=1; i<len; ++i) {
-	        	try {
-					g.setFrameNumber(i);
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}  
-	        	Frame frame = null;
-				try {
-					frame = g.grab();
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}  
-	            BufferedImage image = converter.convert(frame);     
-	            //collect 5 frames
-	            if(null != image) {
-	            //	System.out.println("frame");
-	            	
-	            	imglist.add(image);
-	            	++imgCounter;
-	            	//list.addAll(getColorsFromBufferedImage(image));
-	            	
-	            	
-	             /*	try {
-	            	ImageIO.write(image,"png", new File(testImgfolder + i + ".png"));
-	            	 } catch (Exception e) {
-	     	            // TODO Auto-generated catch block
-	     	            e.printStackTrace();
-	     	        } */
-	            }else {
-	            	++nullCounter;
-	            //	System.out.println("null frame");
-	            }
-	            	
-	            
-	            if(imgCounter % listLength == 0) {
-	            	//create a thread to extract the 5 frames
-	            	ArrayList<Integer> result = forkJoinPool.invoke(new ColorFromFrameExtractor(threadId, imglist));
-	            	resultColors.addAll(result);
-	            	System.out.println("colors collected so far: " + resultColors.size());
-	            	
-	            	//executorService.execute(new ColorFromFrameExtractor(threadId, imglist));
-	            	
-	            	imglist = new ArrayList<>(); //empty list
-	            	imgCounter = 0;
-	            	++threadId;
-	            }
-		      
-	       //   System.out.println("working on frame: " +i + "/" + len);
-	        }
-	        
-	        if(imgCounter != 0) {
-	        	//create a thread to extract the 5 frames
-	        	ArrayList<Integer> result = forkJoinPool.invoke(new ColorFromFrameExtractor(threadId, imglist));
-            	resultColors.addAll(result);
-            	imglist = new ArrayList<>(); //empty list
-	        	imgCounter = 0;
-	        	++threadId;
-	        }
-	        
-	        try {
-				g.stop();
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-	       
-	        System.out.println("Waiting to terminate threads: " + (threadId-1));
-			//wait unitl one minute goes away
-			try {
-				forkJoinPool.awaitTermination(20,  TimeUnit.SECONDS);
-			} catch (InterruptedException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			
-			System.out.println("Collecting result colors.");
-			//now collect the results
-	    	ArrayList<Integer> list = resultColors;
-	    	
-	
-		System.out.println("Null-Frames: " + nullCounter + "//" + len);
-		System.out.println("Colors collected: " + list.size());
-		
 		
 		//do the rest
 		//System.exit(0);
 		//should be done by database
 		//list = vg.sortColorListByLuminescence(list); //just for now
 		Integer[] colorInt = list.toArray(new Integer[0]);
-		
+		int numberOfColorsProcessedInOneGo = (int) Math.ceil(colorInt.length  / partsToSplitColors);//100000;
 		System.out.println("Colors to work with: " + list.size());
 		
 		//create the gradient image parts now
-		forkJoinPool = new ForkJoinPool(forkpool);
+		ForkJoinPool forkJoinPool = new ForkJoinPool(forkpool);
 		
 		//int imgNr = vg.drawGradientImageParts(colors);
 		//public int drawGradientImageParts(Integer[] colorInt) {
@@ -449,19 +461,25 @@ public class VideoGrabber {
 				++ii;
 			}
 			
+
 			boolean continueIt = true;
 			int imgNr=0;
 			for(int i=0-numberOfColorsProcessedInOneGo+1, j=0, colorLen=colors.length, testJ=0;continueIt;) {			
 				if(testJ < colorLen) {
 					i = i+numberOfColorsProcessedInOneGo-1;
 					j = j+numberOfColorsProcessedInOneGo;
+					
+					
 				}
 				else {
 					j = colorLen;
 					i = colorLen-i;
 					continueIt=false;
 				}
+				
 				System.out.println("Working on color: "+ i + "-" + j + " / " + colorLen );
+				if(i<0 || j<=0) break;
+				
 				Color[] colorsPartArr = Arrays.copyOfRange(colors, i, i +numberOfColorsProcessedInOneGo);	
 				forkJoinPool.invoke(new DrawGradientPart(imgfolder, colorsPartArr, imgNr));
 		    	
@@ -477,16 +495,18 @@ public class VideoGrabber {
 		
 		
 		 
-		 BufferedImage image = vg.addAllImagePartsTogether(imgNr);
-		 BufferedImage result = vg.blurImage( image);
+		 BufferedImage image = vg.addAllImagePartsTogether( imgNr );
+		 BufferedImage result = vg.blurImage( image );
 		 
 		   try {
-	        	 System.out.println("Writing end image.");
-	         	ImageIO.write(result,"png", new File(imgfolder+ "Img.png"));
-	         	 } catch (IOException e) {
-	  	            // TODO Auto-generated catch block
-	  	            e.printStackTrace();
-	  	        }
+			   if(null != result) {
+				   System.out.println("Writing end image: " + imgfolder+ "Img.png");
+	         		ImageIO.write(result,"png", new File(imgfolder+ "Img.png"));
+			   }
+         	 } catch (IOException e) {
+  	            // TODO Auto-generated catch block
+  	            e.printStackTrace();
+  	        }
 		
 		
 		
