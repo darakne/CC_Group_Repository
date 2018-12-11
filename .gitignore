@@ -57,3 +57,6 @@ nb-configuration.xml
 release.properties
 pom.xml.releaseBackup
 pom.xml.tag
+
+config.properties
+rds-ca-2015-eu-central-1.pem

@@ -417,9 +417,9 @@ public class VideoGrabber {
 		// TODO Auto-generated method stub
 		VideoGrabber vg = new VideoGrabber();
 		
-		String videopath = "C:/temp/randomvideo2.mp4";
+		String videopath = "C:/temp/randomvideo.mp4";
 		
-		int partsToSplitColors = 10;
+		int partsToSplitColors = 100;
 		
 		
 		String imgfolder = "C:/temp2/";
