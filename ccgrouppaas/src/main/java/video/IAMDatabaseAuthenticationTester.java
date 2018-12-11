@@ -48,7 +48,7 @@ public class IAMDatabaseAuthenticationTester {
     VideoConfig config = new VideoConfig();
  	   //Configuration parameters for the generation of the IAM Database Authentication token
  	 RDS_INSTANCE_HOSTNAME = (String) config.getProperty("rds_instance_hostname");
- 	  RDS_INSTANCE_PORT = 3306;
+ 	 RDS_INSTANCE_PORT = 3306;
  	 REGION_NAME = config.getProperty("region_name");
  	  DB_USER = config.getProperty("db_user");
  	  JDBC_URL = "jdbc:mysql://" + RDS_INSTANCE_HOSTNAME + ":" + RDS_INSTANCE_PORT;
@@ -65,7 +65,7 @@ public class IAMDatabaseAuthenticationTester {
 
         //verify the connection is successful
         Statement stmt= connection.createStatement();
-        ResultSet rs=stmt.executeQuery("SELECT 'Success!' FROM DUAL;");
+        ResultSet rs=stmt.executeQuery("SELECT * FROM Image");
         while (rs.next()) {
         	    String id = rs.getString(1);
             System.out.println(id); //Should print "Success!"

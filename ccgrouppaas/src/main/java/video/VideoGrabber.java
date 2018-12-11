@@ -12,8 +12,11 @@ import java.awt.image.ConvolveOp;
 import java.awt.image.Kernel;
 import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.Buffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -415,14 +418,32 @@ public class VideoGrabber {
 	
 	public static void main(String[] args) throws IOException {
 		// TODO Auto-generated method stub
-		VideoGrabber vg = new VideoGrabber();
 		
-		String videopath = "C:/temp/randomvideo.mp4";
 		
+		
+		
+		String videourl = "http://mirrors.standaloneinstaller.com/video-sample/small.mp4"; //"C:/temp/randomvideo.mp4";
+		String videoname = "video.mp4";
+		//download video
+		try (BufferedInputStream in = new BufferedInputStream(new URL(videourl).openStream());
+				  FileOutputStream fileOutputStream= new FileOutputStream(videoname)) {
+				    byte dataBuffer[] = new byte[1024];
+				    int bytesRead;
+				    while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
+				        fileOutputStream.write(dataBuffer, 0, bytesRead);
+				    }
+				    
+				    
+				} catch (IOException e) {
+				    e.printStackTrace();
+				}
+		String videopath = ""+videoname;
+
 		int partsToSplitColors = 100;
 		
 		
 		String imgfolder = "C:/temp2/";
+		VideoGrabber vg = new VideoGrabber();		
 		vg.setImageFolder(imgfolder);
 		
 		String testImgfolder = "C:/temp3/";
@@ -435,6 +456,7 @@ public class VideoGrabber {
 
 		System.out.println("Collecting result colors.");
 		//now collect the results
+	
 	    ArrayList<Integer> list = vg.extractFramesAndColorsFromVideo(videopath, forkpool);
 
 		
