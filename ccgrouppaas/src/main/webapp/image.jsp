@@ -4,9 +4,12 @@
 <html>
 <head>
 <meta charset="ISO-8859-1">
-<title>Insert title here</title>
+<title>Gradle</title>
 </head>
 <body>
 <h1>Image comes here</h1>
+
+<img src="<%=request.getParameter("image")%>"> 
+<img src="C:/temp2/animal.png" > 
 </body>
 </html>

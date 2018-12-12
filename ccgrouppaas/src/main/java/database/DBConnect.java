@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import servlet.RestServlet;
+import servlet.LinkServlet;
 import video.VideoConfig;
 
 /**
@@ -20,7 +20,7 @@ import video.VideoConfig;
  *
  */
 public class DBConnect {
-	private static final Logger logger = LogManager.getLogger(RestServlet.class.getName());
+	private static final Logger logger = LogManager.getLogger(LinkServlet.class.getName());
 	
 	VideoConfig config;
 	VideoConfig dbconfig;
