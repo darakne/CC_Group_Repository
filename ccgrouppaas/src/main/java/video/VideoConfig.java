@@ -18,30 +18,29 @@ public class VideoConfig extends Properties{
 	 */
 	private static final long serialVersionUID = 1L;
 	String result = "";
-	InputStream inputStream;
 	
 	
-	public VideoConfig() {
+	
+	public VideoConfig(String pathtoconfig) {
 
 		try {
-			getPropValues();
+			getPropValues(pathtoconfig);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 	
-	public String getPropValues() throws IOException {
- 
+	public String getPropValues(String pathtoconfig) throws IOException {
+		InputStream inputStream = null;
+		 
 		try {
-			String propFileName = "config.properties";
- 
-			inputStream = getClass().getClassLoader().getResourceAsStream(propFileName);
- 
+			inputStream = getClass().getClassLoader().getResourceAsStream(pathtoconfig);
+			
 			if (inputStream != null) {
 				super.load(inputStream);
 			} else {
-				throw new FileNotFoundException("property file '" + propFileName + "' not found in the classpath");
+				throw new FileNotFoundException("property file '" + pathtoconfig + "' not found in the classpath");
 			}
  
 		} catch (Exception e) {
@@ -55,7 +54,7 @@ public class VideoConfig extends Properties{
 	 
 
 	public static void main(String[] args) {
-		VideoConfig f = new VideoConfig();
+		VideoConfig f = new VideoConfig("config.propertie");
 		System.out.println(f.get("company3"));
 
 	}

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration status="ERROR">
+    <!--The first definition of all appender-->
+    <appenders>
+
+        <!--The output console configuration-->
+        <Console name="Console" target="SYSTEM_OUT">
+            <!--The console output only level and above the level of the information (onMatch), directly to the other(onMismatch)-->
+            <ThresholdFilter level="trace" onMatch="ACCEPT" onMismatch="DENY"/>
+            <!--This all know is the output log format-->
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5level %class{36}/ %M(), Line %L: %msg%xEx%n"/>
+        </Console>
+
+    </appenders>
+    <!--Then the definition of logger, only the definition of logger and the introduction of the appender, the appender will take effect-->
+    <loggers>
+        <!--Create a default root logger-->
+        <root level="TRACE">
+           <appender-ref ref="Console"/>
+        </root>
+
+    </loggers>
+</configuration>
