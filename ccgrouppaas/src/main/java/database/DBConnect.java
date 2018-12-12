@@ -203,7 +203,7 @@ public class DBConnect {
 		
 		int colorid = checkImgIdAndColor_GetColorID(imgId, colorValue, connection);
 	
-		if(null == connection) 
+	
 			connection = createDBConnection();
 		if(colorid == -1) {
 			//color is not there yet
@@ -223,6 +223,7 @@ public class DBConnect {
 			
 			//get the occurrence first
 			int occurence= getOccurrence(colorid, connection)+1;
+			
 			
 			//now update table			
 			String statemenet = dbconfig.getProperty("update_Color");
@@ -280,7 +281,7 @@ public class DBConnect {
 		 System.out.println("res: checkImgId " + imgId + ": " + db.checkImgId(imgId, null));
 		 System.out.println("res: checkImgIdAndColor_GetColorID: " + db.checkImgIdAndColor_GetColorID(imgId, colorValue, null));
 		 db.createOrUpdateColor(imgId, colorValue, null);
-		 db.deleteAllColorsOfImage(imgId, null);
+		 // db.deleteAllColorsOfImage(imgId, null);
 		 
 	}
 
