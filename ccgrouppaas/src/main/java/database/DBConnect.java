@@ -239,48 +239,35 @@ public class DBConnect {
 		// System.out.println("colorid in method: " + colorid);
 	}
 	
+	/**
+	 * Not tested
+	 * @param imgId
+	 * @param colorValue
+	 * @param connection
+	 * @return
+	 * @throws SQLException
+	 */
+	public boolean deleteAllColorsOfImage(int imgId, Connection connection) throws SQLException {
+		PreparedStatement ps = null;
+		int deleted = 0;
+		if(null == connection) 
+			connection = createDBConnection();
+		String statemenet = dbconfig.getProperty("delete_Color");
+		ps = connection.prepareStatement(statemenet);
+		ps.setInt(1, imgId);
 
-	public void connectJDBCToAWSEC2(int imgId, ArrayList<Integer> colors) {
-		
-		/*
-		
-		
-	    System.out.println("----MySQL JDBC Connection Testing -------");
-	    
-	  
+		deleted = ps.executeUpdate();
 
-	    if (connection != null) {
-	    	 try {
-	    		 //ask if imid exists
-	    		 //ask if color + imgid exists
-	    		 	//if yes, ask occurences
-	    		 
-	    	  PreparedStatement ps = connection
-	                    .prepareStatement("INSERT INTO Color (imgid, colorid, colorValue, occurence) VALUES (?, ?, ?, ?);");
-	           
-					ps.setInt(1, imgId);
-					ps.setInt(2, colors.get(i));
+		System.out.println("Record is deleted!");
+
+		ps.close();
+		connection.close();
+		
+		if(deleted ==1) return true;
+		return false;
 			
-	            ps.setString(2, "Meier");
-	            ResultSet rs = ps.executeQuery();
-	            while (rs.next())
-	                System.out.println(rs.getString(1) + "\n" + rs.getString(2));
-	            ps.close();
-	            connection.close(); 
-	        	} catch (SQLException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-	       
-	    	
-	        System.out.println("SUCCESS!!!! You made it, take control     your database now!");
-	    } else {
-	        System.out.println("FAILURE! Failed to make connection!");
-	    }
-	    
-	    */
-
 	}
+
 
 	public static void main(String[] args) throws SQLException {
 		DBConnect db = new DBConnect();
@@ -292,7 +279,7 @@ public class DBConnect {
 		 System.out.println("res: checkImgId " + imgId + ": " + db.checkImgId(imgId, null));
 		 System.out.println("res: checkImgIdAndColor_GetColorID: " + db.checkImgIdAndColor_GetColorID(imgId, colorValue, null));
 		 db.createOrUpdateColor(imgId, colorValue, null);
-		 
+		 db.deleteAllColorsOfImage(imgId, null);
 		 
 	}
 

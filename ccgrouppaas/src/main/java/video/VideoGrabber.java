@@ -18,6 +18,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.Buffer;
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -117,7 +118,7 @@ public class VideoGrabber {
 	}
 	*/
 	
-	public  ArrayList<Integer> extractFramesAndColorsFromVideo(String videopath, int forkpool)  {
+	public  ArrayList<Integer> extractFramesAndColorsFromVideo(String videopath, int imgID, int forkpool)  {
 
 		FFmpegFrameGrabber g = new FFmpegFrameGrabber(videopath);
 		try {
@@ -181,7 +182,7 @@ public class VideoGrabber {
             
             if(imgCounter % listLength == 0) {
             	//create a thread to extract the 5 frames
-            	ArrayList<Integer> result = forkJoinPool.invoke(new ColorFromFrameExtractor(threadId, imglist));
+            	ArrayList<Integer> result = forkJoinPool.invoke(new ColorFromFrameExtractor(threadId,imgID, imglist));
             	resultColors.addAll(result);
             	System.out.println("colors collected so far: " + resultColors.size());
             	
@@ -197,7 +198,7 @@ public class VideoGrabber {
         
         if(imgCounter != 0) {
         	//create a thread to extract the 5 frames
-        	ArrayList<Integer> result = forkJoinPool.invoke(new ColorFromFrameExtractor(threadId, imglist));
+        	ArrayList<Integer> result = forkJoinPool.invoke(new ColorFromFrameExtractor(threadId, imgID, imglist));
         	resultColors.addAll(result);
         	imglist = new ArrayList<>(); //empty list
         	imgCounter = 0;
@@ -420,7 +421,8 @@ public class VideoGrabber {
 		// TODO Auto-generated method stub
 		
 		
-		
+		//for now set imgid to something
+		int imgID=1;
 		
 		String videourl = "http://mirrors.standaloneinstaller.com/video-sample/small.mp4"; //"C:/temp/randomvideo.mp4";
 		String videoname = "video.mp4";
@@ -457,7 +459,7 @@ public class VideoGrabber {
 		System.out.println("Collecting result colors.");
 		//now collect the results
 	
-	    ArrayList<Integer> list = vg.extractFramesAndColorsFromVideo(videopath, forkpool);
+	    ArrayList<Integer> list = vg.extractFramesAndColorsFromVideo(videopath, imgID, forkpool);
 
 		
 		//do the rest
@@ -469,12 +471,14 @@ public class VideoGrabber {
 		System.out.println("Colors to work with: " + list.size());
 		
 		//create the gradient image parts now
+		//attention ArrayLists are empty now > colors saved at database
 		ForkJoinPool forkJoinPool = new ForkJoinPool(forkpool);
 		
 		//int imgNr = vg.drawGradientImageParts(colors);
 		//public int drawGradientImageParts(Integer[] colorInt) {
 			//int colors to colors
 			
+		//to do: get some colors from database and send them to thread
 			Color[] colors = new Color[colorInt.length];
 			int ii=0;
 			for(int ic: colorInt) {
@@ -515,6 +519,7 @@ public class VideoGrabber {
 		//	return imgNr;
 		//}
 		
+			//delete colors from database by DBConnect deleteAllColorsOfImage(int imgId, Connection connection)
 		
 		 
 		 BufferedImage image = vg.addAllImagePartsTogether( imgNr );
