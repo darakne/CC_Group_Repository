@@ -97,10 +97,7 @@ public class ColorFromFrameExtractor extends RecursiveTask<ArrayList<Integer>> {
 			BufferedImage image = converter.convert(frame);    
 			//System.out.println(threadId + " works on frame " + i);
 			if(null != image) {
-				ArrayList<Integer> add = getColorsFromBufferedImage(image);
-				if(add.size()>0) {
-					//connect to database
-				}
+				getColorsFromBufferedImage(image);
 			}
 		
 		}

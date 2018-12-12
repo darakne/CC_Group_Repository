@@ -1,5 +1,6 @@
 package database;
 
+import java.awt.Color;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -74,13 +75,13 @@ public class DBConnect {
 		        e.printStackTrace();
 		    }
 
-		    logger.debug("MySQL JDBC Driver Registered!");
+		    //logger.debug("MySQL JDBC Driver Registered!");
 		    Connection connection = null;
 		    String conStr = "jdbc:mysql://" + PUBLIC_DNS + ":3306/" +DBNAME;
 		  //  System.out.println("conStr: " + conStr);
 		   
 		    connection = DriverManager.getConnection(conStr,REMOTE_DATABASE_USERNAME, DATABASE_USER_PASSWORD);
-		    logger.debug("MySQL Connection created!");
+		    //logger.debug("MySQL Connection created!");
 		    return connection;
    
 	}
@@ -100,7 +101,7 @@ public class DBConnect {
 			ResultSet rs = ps.executeQuery();
 			
 	        while (rs.next()) {
-	        	logger.debug("MySql version nr: " + rs.getString(1));
+	        	//logger.debug("MySql version nr: " + rs.getString(1));
 	            foundSomething=true;
 	        }
 	        
@@ -128,7 +129,7 @@ public class DBConnect {
 		
 		PreparedStatement ps = connection.prepareStatement(statemenet);
         ps.setInt(1, imgId);
-        logger.debug("prepared statement" + ps);
+        //logger.debug("prepared statement" + ps);
         
         int imgId1=-1;
          ResultSet rs = ps.executeQuery();
@@ -141,11 +142,14 @@ public class DBConnect {
          ps.close();
          connection.close(); 
          
+         logger.info("img id is: " + imgId1 + "==" +imgId);
+         
          if(imgId1 == imgId)
 			 return true;
 		
 		return false;
 	}
+
 	
 	public int checkImgIdAndColor_GetColorID(int imgId, int colorValue, Connection connection) throws SQLException{
 		if(null == connection) 
@@ -156,7 +160,7 @@ public class DBConnect {
 		PreparedStatement ps = connection.prepareStatement(statemenet);
         ps.setInt(1, imgId);
         ps.setInt(2, colorValue);
-        logger.debug("prepared statement" + ps);
+        //logger.debug("prepared statement" + ps);
         
         int colorid=-1;
          ResultSet rs = ps.executeQuery();
@@ -169,7 +173,7 @@ public class DBConnect {
          ps.close();
          connection.close(); 
          
-         logger.debug("Returning colorid: " + colorid);
+         logger.info("Returning colorid: " + colorid);
 	return colorid;
 
 	}
@@ -183,7 +187,7 @@ public class DBConnect {
 		
 		PreparedStatement ps = connection.prepareStatement(statemenet);
         ps.setInt(1, colorId);
-        logger.debug("prepared statement" + ps);
+        //logger.debug("prepared statement" + ps);
         
         int occurrence=0;
          ResultSet rs = ps.executeQuery();
@@ -199,11 +203,11 @@ public class DBConnect {
          return occurrence;
 	}
 	
-	public void createOrUpdateColor(int imgId, int colorValue, Connection connection) throws SQLException {
+	public boolean createOrUpdateColor(int imgId, int colorValue, Connection connection) throws SQLException {
 		
 		int colorid = checkImgIdAndColor_GetColorID(imgId, colorValue, connection);
-	
-	
+		 int update= -1;
+		if(null == connection) 
 			connection = createDBConnection();
 		if(colorid == -1) {
 			//color is not there yet
@@ -213,7 +217,7 @@ public class DBConnect {
 	        ps.setInt(1, imgId);
 	        ps.setInt(2, colorValue);
 	        ps.setInt(3, 1);
-	        logger.debug("prepared statement" + ps);
+	        //logger.debug("prepared statement" + ps);
 	        
 	        ps.executeUpdate();
 	        ps.close();
@@ -225,20 +229,59 @@ public class DBConnect {
 			int occurence= getOccurrence(colorid, connection)+1;
 			
 			
+			connection = createDBConnection();
+			
 			//now update table			
 			String statemenet = dbconfig.getProperty("update_Color");
 			PreparedStatement ps = connection.prepareStatement(statemenet);
 	        ps.setInt(1, occurence);
 	        ps.setInt(2, colorid);
-	        logger.debug("prepared statement" + ps);
+	        //logger.debug("prepared statement" + ps);
 	        
-	       int update = ps.executeUpdate();
-	       logger.debug("updates: " + update);
+	        update = ps.executeUpdate();
+	       logger.debug("color updates: " + update);
 	       
 	        ps.close();
 	        connection.close(); 
+	        
+	    	
 		}
+		
+		if(update==1) return true;
+		
+		return false;
 		// System.out.println("colorid in method: " + colorid);
+	}
+	
+	public Color[] getColorsOrdered(int imgId, int from, int to, Connection connection) throws SQLException{
+		PreparedStatement ps = null;
+	
+		if(null == connection) 
+			connection = createDBConnection();
+		
+		
+		String statemenet = dbconfig.getProperty("getAllColorsOrdered");
+		ps = connection.prepareStatement(statemenet);
+		ps.setInt(1, imgId);
+		ps.setInt(2, from);
+		ps.setInt(3, to);
+		
+		Color[] colors = new Color[to-from];
+		int colorInt;
+		Color c;
+        ResultSet rs = ps.executeQuery();
+        for(int i=0;rs.next();++i) {
+       	 String imgIdStr = rs.getString(1);
+       	 if(null != imgIdStr) {
+       		colorInt=(Integer.parseInt(imgIdStr));	
+       		c = new Color(colorInt);
+       		colors[i] = c; 
+       	 }
+        }
+        ps.close();
+        connection.close(); 
+        
+		return colors;		
 	}
 	
 	/**
@@ -260,8 +303,6 @@ public class DBConnect {
 
 		deleted = ps.executeUpdate();
 
-		System.out.println("Record is deleted!");
-
 		ps.close();
 		connection.close();
 		
@@ -276,13 +317,13 @@ public class DBConnect {
 		db.checkConnection();
 		//db.createColorTable(); //only for table init
 		// System.out.println("db.dropColorTable(): " + db.dropColorTable());
-		int imgId = 12;
+		int imgId = 0;
 		int colorValue=1;
 		 System.out.println("res: checkImgId " + imgId + ": " + db.checkImgId(imgId, null));
-		 System.out.println("res: checkImgIdAndColor_GetColorID: " + db.checkImgIdAndColor_GetColorID(imgId, colorValue, null));
-		 db.createOrUpdateColor(imgId, colorValue, null);
-		 // db.deleteAllColorsOfImage(imgId, null);
-		 
+		// System.out.println("res: checkImgIdAndColor_GetColorID: " + db.checkImgIdAndColor_GetColorID(imgId, colorValue, null));
+		// db.createOrUpdateColor(imgId, colorValue, null);
+		  db.deleteAllColorsOfImage(imgId, null);
+		 System.out.println("res: getColorsOrdered():"+  db.getColorsOrdered(12, 55, 66, null));
 	}
 
 	

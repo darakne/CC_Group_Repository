@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.Buffer;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -43,6 +44,8 @@ import org.bytedeco.javacv.Java2DFrameConverter;
 
 import com.amazonaws.services.ec2.model.InstanceType;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
+
+import database.DBConnect;
 
 
 public class VideoGrabber {
@@ -117,6 +120,7 @@ public class VideoGrabber {
 	        return list;
 	}
 	*/
+
 	
 	public  ArrayList<Integer> extractFramesAndColorsFromVideo(String videopath, int imgID, int forkpool)  {
 
@@ -421,8 +425,7 @@ public class VideoGrabber {
 		// TODO Auto-generated method stub
 		
 		
-		//for now set imgid to something
-		int imgID=1;
+
 		
 		String videourl = "http://mirrors.standaloneinstaller.com/video-sample/small.mp4"; //"C:/temp/randomvideo.mp4";
 		String videoname = "video.mp4";
@@ -455,11 +458,27 @@ public class VideoGrabber {
 		//process the video
 //		BufferedImage image = ImageIO.read(new File("D:\\temp\\randomvideo.mp4"));
 		System.out.println("---------------");
+		DBConnect db = new DBConnect();
+		
+		int imgId = 0;
+		boolean imgIdExists = true;
+		while(imgIdExists) {
+			imgId = (int)(Math.random()*10000000);
+			if(imgId == 0) ++imgId;
+			try {
+				imgIdExists = db.checkImgId(imgId, null);
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		System.out.println("ImgId created.");
 
 		System.out.println("Collecting result colors.");
 		//now collect the results
 	
-	    ArrayList<Integer> list = vg.extractFramesAndColorsFromVideo(videopath, imgID, forkpool);
+	    ArrayList<Integer> list = vg.extractFramesAndColorsFromVideo(videopath, imgId, forkpool);
 
 		
 		//do the rest
@@ -487,26 +506,31 @@ public class VideoGrabber {
 				++ii;
 			}
 			
-
+		
 			boolean continueIt = true;
 			int imgNr=0;
 			for(int i=0-numberOfColorsProcessedInOneGo+1, j=0, colorLen=colors.length, testJ=0;continueIt;) {			
 				if(testJ < colorLen) {
 					i = i+numberOfColorsProcessedInOneGo-1;
 					j = j+numberOfColorsProcessedInOneGo;
-					
-					
 				}
 				else {
 					j = colorLen;
 					i = colorLen-i;
 					continueIt=false;
 				}
+				Color[] colorsPartArr = null;
+				try {
+					colorsPartArr = db.getColorsOrdered(imgId, i, j, null);
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
 				
 				System.out.println("Working on color: "+ i + "-" + j + " / " + colorLen );
 				if(i<0 || j<=0) break;
-				
-				Color[] colorsPartArr = Arrays.copyOfRange(colors, i, i +numberOfColorsProcessedInOneGo);	
+			
 				forkJoinPool.invoke(new DrawGradientPart(imgfolder, colorsPartArr, imgNr));
 		    	
 				System.out.println(imgNr + ".part (" + i + "/" + colorLen + ")");
@@ -520,7 +544,12 @@ public class VideoGrabber {
 		//}
 		
 			//delete colors from database by DBConnect deleteAllColorsOfImage(int imgId, Connection connection)
-		
+		try {
+			db.deleteAllColorsOfImage(imgId, null);
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		 
 		 BufferedImage image = vg.addAllImagePartsTogether( imgNr );
 		 BufferedImage result = vg.blurImage( image );
