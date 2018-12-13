@@ -9,22 +9,25 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.Callable;
 import java.util.concurrent.RecursiveTask;
 
 import javax.imageio.ImageIO;
 
-public class DrawGradientPart extends RecursiveTask<Integer> {
+import org.bytedeco.javacpp.freenect2.Logger;
+
+public class DrawGradientPart  implements Callable<Boolean>{
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 	final static int BUFFERED_IMAGE_TYPE = BufferedImage.TYPE_INT_ARGB;
 	//private int numberOfColorsProcessedInOneGo;
-	private Color[] colors;
+	private ArrayList<Color> colors;
 	private String imageFolder;
 	private int imgNr;
 	
-	public DrawGradientPart(String imageFolder, Color[] colors, int imageNr) {
+	public DrawGradientPart(String imageFolder, ArrayList<Color> colors, int imageNr) {
 		this.imageFolder = imageFolder;
 		//this.numberOfColorsProcessedInOneGo = numberOfColorsProcessedInOneGo;
 		this.colors = colors;
@@ -84,11 +87,15 @@ public class DrawGradientPart extends RecursiveTask<Integer> {
 	 * @return
 	 */
 	private BufferedImage createGradientImage() {
-		final BufferedImage resultImg = new BufferedImage(
-                10, 100, BUFFERED_IMAGE_TYPE);
+		if(null == colors) return null;
+		if(colors.size() < 2) {
+			colors.add(colors.get(0));
+		}
+		
+		BufferedImage resultImg = new BufferedImage(10, 100, BUFFERED_IMAGE_TYPE);
 				
-         float[] dist = new float[colors.length];
-         for(int i=0, j=colors.length;i<j;++i) {
+         float[] dist = new float[colors.size()];
+         for(int i=0, j=colors.size();i<j;++i) {
         	 float x = (float)i/(float)j;
         	 if(x < (float)1)  dist[i] = x;
         	 else x=1;       	
@@ -98,9 +105,10 @@ public class DrawGradientPart extends RecursiveTask<Integer> {
          Point2D start = new Point2D.Float(0, 100);
          Point2D end = new Point2D.Float(200,100);
          //not enough heap space for this
-         LinearGradientPaint p = new LinearGradientPaint(start, end, dist, colors); 
+         Color[] colorArr = colors.toArray(new Color[0]);
+         LinearGradientPaint p = new LinearGradientPaint(start, end, dist, colorArr); 
          g1.setPaint(p);
-         g1.fillRect(0, 0, 200, 200);
+         g1.fillRect(0, 0, 300, 300);
          g1.dispose();
          
          
@@ -108,17 +116,20 @@ public class DrawGradientPart extends RecursiveTask<Integer> {
 	}
 
 	@Override
-	protected Integer compute() {
+	public Boolean call() {
 		BufferedImage image1 = createGradientImage();
-		
+		if(null == image1) {
+			System.out.println("DrawGradientPart: image is null." );
+			return false;
+		}
 		try {
 			ImageIO.write(image1,"png", new File(imageFolder +"Img" + imgNr + ".png"));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		return imgNr;
+		return true;
+
 	}
 	
 

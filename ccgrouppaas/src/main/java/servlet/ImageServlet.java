@@ -18,7 +18,7 @@ public class ImageServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException  {
 		try{
 	         String fileName = "animal.png";            
-	         FileInputStream fis = new FileInputStream(new File("C:\\temp2\\"+fileName));
+	         FileInputStream fis = new FileInputStream(new File("temp2\\"+fileName));
 	         BufferedInputStream bis = new BufferedInputStream(fis);             
 	         response.setContentType("image/png");
 	         BufferedOutputStream output = new BufferedOutputStream(response.getOutputStream());
